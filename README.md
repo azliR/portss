@@ -4,7 +4,8 @@ A minimal, ultra-lightweight macOS menu bar note-taking application designed to 
 
 - **Menu Bar Only**: Lives solely in your macOS status bar (`LSUIElement`), no Dock icon.
 - **Ultra Lightweight**: Pure AppKit with binary size under 230 KB and minimal memory footprint (~4-7 MB RAM).
-- **Space-Between Table Layout**: Keys align to the left, and values/ports align to the far right with clean typography.
+- **Flush-Right Table Layout**: Keys align strictly to the left, and values/ports align flush to the far right margin with zero trailing empty space.
+- **Native Hover Highlights**: Interactive row hover feedback adhering to macOS system colors and dark/light modes.
 - **Optional Groups & Folded Submenus**:
   - Standalone ports (no group) appear directly in the root menu for instant 1-click copying.
   - Grouped ports automatically collapse into native folded submenus.

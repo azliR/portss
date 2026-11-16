@@ -7,14 +7,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let storage: PortStorage
     private let addPortDialog: AddPortDialog
     private let deletePortDialog: DeletePortDialog
-    private let itemFormatter: PortMenuItemFormatter
 
     init(storage: PortStorage) {
         self.storage = storage
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.addPortDialog = AddPortDialog()
         self.deletePortDialog = DeletePortDialog()
-        self.itemFormatter = PortMenuItemFormatter()
         super.init()
 
         setupStatusItem()
@@ -79,9 +77,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private func populateStore(_ store: PortStore, into menu: NSMenu) {
-        let standaloneTabLocation = itemFormatter.calculateTabLocation(for: store.standaloneItems)
         for item in store.standaloneItems {
-            let itemMenu = createPortMenuItem(item: item, tabLocation: standaloneTabLocation)
+            let itemMenu = createPortMenuItem(item: item)
             menu.addItem(itemMenu)
         }
 
@@ -98,9 +95,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                 emptyItem.isEnabled = false
                 groupSubmenu.addItem(emptyItem)
             } else {
-                let groupTabLocation = itemFormatter.calculateTabLocation(for: group.items)
                 for item in group.items {
-                    let itemMenu = createPortMenuItem(item: item, tabLocation: groupTabLocation)
+                    let itemMenu = createPortMenuItem(item: item)
                     groupSubmenu.addItem(itemMenu)
                 }
             }
@@ -110,22 +106,18 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
     }
 
-    private func createPortMenuItem(item: PortItem, tabLocation: CGFloat) -> NSMenuItem {
-        let fallbackTitle = "\(item.key): \(item.value)"
-        let menuItem = NSMenuItem(title: fallbackTitle, action: #selector(handleCopyPortValue(_:)), keyEquivalent: "")
-        menuItem.attributedTitle = itemFormatter.format(item: item, tabLocation: tabLocation)
-        menuItem.target = self
+    private func createPortMenuItem(item: PortItem) -> NSMenuItem {
+        let menuItem = NSMenuItem()
+        let customView = PortMenuItemView(portItem: item) { [weak self] in
+            self?.executeCopy(portValue: item.value)
+        }
+        menuItem.view = customView
         menuItem.representedObject = item.value
         menuItem.toolTip = "Click to copy '\(item.value)' to clipboard"
         return menuItem
     }
 
-    @objc private func handleCopyPortValue(_ sender: NSMenuItem) {
-        guard let portValue = sender.representedObject as? String else {
-            DialogPresenter.shared.showError(title: "Clipboard Error", message: "Port value is missing.")
-            return
-        }
-
+    private func executeCopy(portValue: String) {
         ClipboardManager.shared.copyToClipboard(text: portValue)
         NSSound.beep()
     }
