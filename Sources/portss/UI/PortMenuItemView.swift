@@ -11,6 +11,10 @@ final class PortMenuItemView: NSView {
     private let valueLabel = NSTextField(labelWithString: "")
     private var trackingAreaRef: NSTrackingArea?
 
+    override var allowsVibrancy: Bool {
+        return true
+    }
+
     init(portItem: PortItem, onCopy: @escaping () -> Void) {
         self.portItem = portItem
         self.onCopy = onCopy
@@ -34,18 +38,28 @@ final class PortMenuItemView: NSView {
         highlightContainerView.layer?.backgroundColor = NSColor.clear.cgColor
         addSubview(highlightContainerView)
 
+        let standardMenuFont = NSFont.menuFont(ofSize: 0)
+
         keyLabel.translatesAutoresizingMaskIntoConstraints = false
         keyLabel.stringValue = portItem.key
-        keyLabel.font = NSFont.systemFont(ofSize: 13, weight: .regular)
-        keyLabel.textColor = NSColor.labelColor
+        keyLabel.font = standardMenuFont
+        keyLabel.textColor = NSColor.controlTextColor
         keyLabel.lineBreakMode = .byTruncatingTail
+        keyLabel.drawsBackground = false
+        keyLabel.isBezeled = false
+        keyLabel.isEditable = false
+        keyLabel.isSelectable = false
         addSubview(keyLabel)
 
         valueLabel.translatesAutoresizingMaskIntoConstraints = false
         valueLabel.stringValue = portItem.value
-        valueLabel.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .regular)
+        valueLabel.font = NSFont.monospacedDigitSystemFont(ofSize: standardMenuFont.pointSize, weight: .regular)
         valueLabel.textColor = NSColor.secondaryLabelColor
         valueLabel.alignment = .right
+        valueLabel.drawsBackground = false
+        valueLabel.isBezeled = false
+        valueLabel.isEditable = false
+        valueLabel.isSelectable = false
         addSubview(valueLabel)
     }
 
@@ -101,11 +115,11 @@ final class PortMenuItemView: NSView {
     private func setHoverState(isHovered: Bool) {
         if isHovered {
             highlightContainerView.layer?.backgroundColor = NSColor.selectedContentBackgroundColor.cgColor
-            keyLabel.textColor = NSColor.white
-            valueLabel.textColor = NSColor.white.withAlphaComponent(0.85)
+            keyLabel.textColor = NSColor.selectedMenuItemTextColor
+            valueLabel.textColor = NSColor.selectedMenuItemTextColor.withAlphaComponent(0.85)
         } else {
             highlightContainerView.layer?.backgroundColor = NSColor.clear.cgColor
-            keyLabel.textColor = NSColor.labelColor
+            keyLabel.textColor = NSColor.controlTextColor
             valueLabel.textColor = NSColor.secondaryLabelColor
         }
     }

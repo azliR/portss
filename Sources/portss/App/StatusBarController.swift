@@ -6,12 +6,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem
     private let storage: PortStorage
     private let addPortDialog: AddPortDialog
+    private let editPortDialog: EditPortDialog
     private let deletePortDialog: DeletePortDialog
 
     init(storage: PortStorage) {
         self.storage = storage
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.addPortDialog = AddPortDialog()
+        self.editPortDialog = EditPortDialog()
         self.deletePortDialog = DeletePortDialog()
         super.init()
 
@@ -58,6 +60,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let addItem = NSMenuItem(title: "Add Port...", action: #selector(handleAddPort), keyEquivalent: "")
         addItem.target = self
         menu.addItem(addItem)
+
+        let editItem = NSMenuItem(title: "Edit Port...", action: #selector(handleEditPort), keyEquivalent: "")
+        editItem.target = self
+        menu.addItem(editItem)
 
         let deleteItem = NSMenuItem(title: "Delete Port...", action: #selector(handleDeletePort), keyEquivalent: "")
         deleteItem.target = self
@@ -132,6 +138,32 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             rebuildMenu()
         } catch {
             DialogPresenter.shared.showError(title: "Save Failed", message: error.localizedDescription)
+        }
+    }
+
+    @objc private func handleEditPort() {
+        let store: PortStore
+        do {
+            store = try storage.loadStore()
+        } catch {
+            DialogPresenter.shared.showError(title: "Data Loading Error", message: error.localizedDescription)
+            return
+        }
+
+        guard let output = editPortDialog.prompt(store: store) else {
+            return
+        }
+
+        do {
+            try storage.updateItem(
+                sourceLocation: output.sourceLocation,
+                newGroupName: output.newGroupName,
+                newKey: output.newKey,
+                newValue: output.newValue
+            )
+            rebuildMenu()
+        } catch {
+            DialogPresenter.shared.showError(title: "Update Failed", message: error.localizedDescription)
         }
     }
 

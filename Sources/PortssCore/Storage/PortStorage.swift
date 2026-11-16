@@ -1,5 +1,10 @@
 import Foundation
 
+public enum PortItemSourceLocation: Sendable, Equatable {
+    case standalone(itemId: UUID)
+    case group(groupId: UUID, itemId: UUID)
+}
+
 public final class PortStorage {
     private let directoryURL: URL
     private let fileURL: URL
@@ -98,6 +103,58 @@ public final class PortStorage {
                 store.standaloneItems[existingIndex] = newItem
             } else {
                 store.standaloneItems.append(newItem)
+            }
+        }
+
+        try saveStore(store)
+    }
+
+    public func updateItem(sourceLocation: PortItemSourceLocation, newGroupName: String?, newKey: String, newValue: String) throws {
+        var store = try loadStore()
+        let updatedItem = try PortItem(key: newKey, value: newValue)
+
+        switch sourceLocation {
+        case .standalone(let itemId):
+            guard let itemIndex = store.standaloneItems.firstIndex(where: { $0.id == itemId }) else {
+                throw ValidationError.itemNotFound(key: itemId.uuidString)
+            }
+            store.standaloneItems.remove(at: itemIndex)
+
+        case .group(let groupId, let itemId):
+            guard let groupIndex = store.groups.firstIndex(where: { $0.id == groupId }) else {
+                throw ValidationError.groupNotFound(groupName: groupId.uuidString)
+            }
+            var group = store.groups[groupIndex]
+            guard let itemIndex = group.items.firstIndex(where: { $0.id == itemId }) else {
+                throw ValidationError.itemNotFound(key: itemId.uuidString)
+            }
+            group.items.remove(at: itemIndex)
+            if group.items.isEmpty {
+                store.groups.remove(at: groupIndex)
+            } else {
+                store.groups[groupIndex] = group
+            }
+        }
+
+        let trimmedGroupName = newGroupName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let validGroupName = trimmedGroupName, !validGroupName.isEmpty {
+            if let groupIndex = store.groups.firstIndex(where: { $0.name.caseInsensitiveCompare(validGroupName) == .orderedSame }) {
+                var group = store.groups[groupIndex]
+                if let existingItemIndex = group.items.firstIndex(where: { $0.key.caseInsensitiveCompare(newKey) == .orderedSame }) {
+                    group.items[existingItemIndex] = updatedItem
+                } else {
+                    group.items.append(updatedItem)
+                }
+                store.groups[groupIndex] = group
+            } else {
+                let newGroup = try PortGroup(name: validGroupName, items: [updatedItem])
+                store.groups.append(newGroup)
+            }
+        } else {
+            if let existingIndex = store.standaloneItems.firstIndex(where: { $0.key.caseInsensitiveCompare(newKey) == .orderedSame }) {
+                store.standaloneItems[existingIndex] = updatedItem
+            } else {
+                store.standaloneItems.append(updatedItem)
             }
         }
 

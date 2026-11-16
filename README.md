@@ -4,11 +4,16 @@ A minimal, ultra-lightweight macOS menu bar note-taking application designed to 
 
 - **Menu Bar Only**: Lives solely in your macOS status bar (`LSUIElement`), no Dock icon.
 - **Ultra Lightweight**: Pure AppKit with binary size under 230 KB and minimal memory footprint (~4-7 MB RAM).
+- **Native Typography & Vibrancy**: Renders with native system `menuFont` and vibrancy support, seamlessly matching macOS menu items.
 - **Flush-Right Table Layout**: Keys align strictly to the left, and values/ports align flush to the far right margin with zero trailing empty space.
 - **Native Hover Highlights**: Interactive row hover feedback adhering to macOS system colors and dark/light modes.
 - **Optional Groups & Folded Submenus**:
   - Standalone ports (no group) appear directly in the root menu for instant 1-click copying.
   - Grouped ports automatically collapse into native folded submenus.
+- **Full Management (Add, Edit, Delete)**:
+  - **Add Port...**: Add standalone or grouped ports.
+  - **Edit Port...**: Select any port from dropdown, prefilled with current group, key, and value to easily modify.
+  - **Delete Port...**: Delete specific ports or entire groups.
 - **Max 24 Characters**: Key, value, and optional group name are constrained to 24 characters max.
 - **Quick Copy**: Click any port item to immediately copy the port number to your clipboard.
 - **Standard Keyboard Shortcuts**: Full support for `Cmd+A` (Select All), `Cmd+Z` (Undo), `Cmd+Shift+Z` (Redo), `Cmd+C` (Copy), `Cmd+V` (Paste), and `Cmd+X` (Cut) in all text fields.
@@ -46,8 +51,9 @@ open dist/portss.app
    - **Key**: (e.g., `web`)
    - **Value**: (e.g., `9400`)
 3. Click any port in the menu list to copy its port number to the clipboard.
-4. Select **Delete Port...** to remove a specific port or entire group.
-5. Select **Open ports.json** to view or edit the underlying JSON file directly.
+4. Select **Edit Port...** to modify the group, key, or port value of any existing item.
+5. Select **Delete Port...** to remove a specific port or entire group.
+6. Select **Open ports.json** to view or edit the underlying JSON file directly.
 
 ---
 

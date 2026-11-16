@@ -73,6 +73,53 @@ struct PortStorageTests {
         #expect(store.standaloneItems.first?.value == "3001")
     }
 
+    @Test func testUpdateItemRenamingAndMovingToGroup() throws {
+        let (storage, tempDir) = try createTemporaryStorage()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        try storage.addOrUpdateItem(groupName: nil, key: "web", value: "3000")
+        let initialStore = try storage.loadStore()
+        let itemId = try #require(initialStore.standaloneItems.first?.id)
+
+        try storage.updateItem(
+            sourceLocation: .standalone(itemId: itemId),
+            newGroupName: "Backend",
+            newKey: "api-server",
+            newValue: "8080"
+        )
+
+        let updatedStore = try storage.loadStore()
+        #expect(updatedStore.standaloneItems.isEmpty)
+        #expect(updatedStore.groups.count == 1)
+        #expect(updatedStore.groups.first?.name == "Backend")
+        #expect(updatedStore.groups.first?.items.count == 1)
+        #expect(updatedStore.groups.first?.items.first?.key == "api-server")
+        #expect(updatedStore.groups.first?.items.first?.value == "8080")
+    }
+
+    @Test func testUpdateGroupedItemToStandalone() throws {
+        let (storage, tempDir) = try createTemporaryStorage()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        try storage.addOrUpdateItem(groupName: "Frontend", key: "ui", value: "3000")
+        let initialStore = try storage.loadStore()
+        let groupId = try #require(initialStore.groups.first?.id)
+        let itemId = try #require(initialStore.groups.first?.items.first?.id)
+
+        try storage.updateItem(
+            sourceLocation: .group(groupId: groupId, itemId: itemId),
+            newGroupName: nil,
+            newKey: "standalone-ui",
+            newValue: "3005"
+        )
+
+        let updatedStore = try storage.loadStore()
+        #expect(updatedStore.groups.isEmpty)
+        #expect(updatedStore.standaloneItems.count == 1)
+        #expect(updatedStore.standaloneItems.first?.key == "standalone-ui")
+        #expect(updatedStore.standaloneItems.first?.value == "3005")
+    }
+
     @Test func testDeleteStandaloneItem() throws {
         let (storage, tempDir) = try createTemporaryStorage()
         defer { try? FileManager.default.removeItem(at: tempDir) }
