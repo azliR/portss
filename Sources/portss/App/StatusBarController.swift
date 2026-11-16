@@ -37,35 +37,35 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let menu = NSMenu()
         menu.delegate = self
 
-        let groups: [PortGroup]
+        let store: PortStore
         do {
-            groups = try storage.loadGroups()
+            store = try storage.loadStore()
         } catch {
             DialogPresenter.shared.showError(title: "Data Loading Error", message: error.localizedDescription)
-            groups = []
+            store = PortStore()
         }
 
-        if groups.isEmpty {
+        if store.isEmpty {
             let emptyItem = NSMenuItem(title: "No ports saved yet", action: nil, keyEquivalent: "")
             emptyItem.isEnabled = false
             menu.addItem(emptyItem)
         } else {
-            populateGroups(groups, into: menu)
+            populateStore(store, into: menu)
         }
 
         menu.addItem(NSMenuItem.separator())
 
-        let addItem = NSMenuItem(title: "Add Port...", action: #selector(handleAddPort), keyEquivalent: "a")
+        let addItem = NSMenuItem(title: "Add Port...", action: #selector(handleAddPort), keyEquivalent: "")
         addItem.target = self
         menu.addItem(addItem)
 
-        let deleteItem = NSMenuItem(title: "Delete Port...", action: #selector(handleDeletePort), keyEquivalent: "d")
+        let deleteItem = NSMenuItem(title: "Delete Port...", action: #selector(handleDeletePort), keyEquivalent: "")
         deleteItem.target = self
         menu.addItem(deleteItem)
 
         menu.addItem(NSMenuItem.separator())
 
-        let openConfigFileItem = NSMenuItem(title: "Open ports.json", action: #selector(handleOpenConfigFile), keyEquivalent: "o")
+        let openConfigFileItem = NSMenuItem(title: "Open ports.json", action: #selector(handleOpenConfigFile), keyEquivalent: "")
         openConfigFileItem.target = self
         menu.addItem(openConfigFileItem)
 
@@ -76,32 +76,43 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         statusItem.menu = menu
     }
 
-    private func populateGroups(_ groups: [PortGroup], into menu: NSMenu) {
-        for (groupIndex, group) in groups.enumerated() {
-            if groupIndex > 0 {
-                menu.addItem(NSMenuItem.separator())
-            }
+    private func populateStore(_ store: PortStore, into menu: NSMenu) {
+        for item in store.standaloneItems {
+            let itemMenu = createPortMenuItem(item: item)
+            menu.addItem(itemMenu)
+        }
 
-            let groupHeaderItem = NSMenuItem(title: "[\(group.name)]", action: nil, keyEquivalent: "")
-            groupHeaderItem.isEnabled = false
-            menu.addItem(groupHeaderItem)
+        if !store.standaloneItems.isEmpty && !store.groups.isEmpty {
+            menu.addItem(NSMenuItem.separator())
+        }
+
+        for group in store.groups {
+            let groupMenuItem = NSMenuItem(title: group.name, action: nil, keyEquivalent: "")
+            let groupSubmenu = NSMenu(title: group.name)
 
             if group.items.isEmpty {
-                let emptyGroupItem = NSMenuItem(title: "  (empty)", action: nil, keyEquivalent: "")
-                emptyGroupItem.isEnabled = false
-                menu.addItem(emptyGroupItem)
-                continue
+                let emptyItem = NSMenuItem(title: "(empty)", action: nil, keyEquivalent: "")
+                emptyItem.isEnabled = false
+                groupSubmenu.addItem(emptyItem)
+            } else {
+                for item in group.items {
+                    let itemMenu = createPortMenuItem(item: item)
+                    groupSubmenu.addItem(itemMenu)
+                }
             }
 
-            for item in group.items {
-                let title = "  \(item.key): \(item.value)"
-                let menuItem = NSMenuItem(title: title, action: #selector(handleCopyPortValue(_:)), keyEquivalent: "")
-                menuItem.target = self
-                menuItem.representedObject = item.value
-                menuItem.toolTip = "Click to copy '\(item.value)' to clipboard"
-                menu.addItem(menuItem)
-            }
+            groupMenuItem.submenu = groupSubmenu
+            menu.addItem(groupMenuItem)
         }
+    }
+
+    private func createPortMenuItem(item: PortItem) -> NSMenuItem {
+        let title = "\(item.key): \(item.value)"
+        let menuItem = NSMenuItem(title: title, action: #selector(handleCopyPortValue(_:)), keyEquivalent: "")
+        menuItem.target = self
+        menuItem.representedObject = item.value
+        menuItem.toolTip = "Click to copy '\(item.value)' to clipboard"
+        return menuItem
     }
 
     @objc private func handleCopyPortValue(_ sender: NSMenuItem) {
@@ -128,15 +139,15 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     @objc private func handleDeletePort() {
-        let groups: [PortGroup]
+        let store: PortStore
         do {
-            groups = try storage.loadGroups()
+            store = try storage.loadStore()
         } catch {
             DialogPresenter.shared.showError(title: "Data Loading Error", message: error.localizedDescription)
             return
         }
 
-        guard let target = deletePortDialog.prompt(groups: groups) else {
+        guard let target = deletePortDialog.prompt(store: store) else {
             return
         }
 
@@ -151,10 +162,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
 
         do {
-            if let itemId = target.itemId {
-                try storage.deleteItem(groupId: target.groupId, itemId: itemId)
-            } else {
-                try storage.deleteGroup(groupId: target.groupId)
+            switch target.action {
+            case .standaloneItem(let itemId):
+                try storage.deleteStandaloneItem(itemId: itemId)
+            case .groupItem(let groupId, let itemId):
+                try storage.deleteGroupItem(groupId: groupId, itemId: itemId)
+            case .group(let groupId):
+                try storage.deleteGroup(groupId: groupId)
             }
             rebuildMenu()
         } catch {
@@ -166,7 +180,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let fileURL = storage.storageFileURL
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
             do {
-                try storage.saveGroups([])
+                try storage.saveStore(PortStore())
             } catch {
                 DialogPresenter.shared.showError(title: "File Error", message: error.localizedDescription)
                 return

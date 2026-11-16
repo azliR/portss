@@ -1,7 +1,7 @@
 import AppKit
 
 struct AddPortInput: Sendable {
-    let groupName: String
+    let groupName: String?
     let key: String
     let value: String
 }
@@ -13,17 +13,17 @@ final class AddPortDialog: NSObject, NSTextFieldDelegate {
     func prompt(prefilledGroupName: String? = nil) -> AddPortInput? {
         let alert = NSAlert()
         alert.messageText = "Add Port"
-        alert.informativeText = "Enter group, key, and value (maximum 24 characters each)."
+        alert.informativeText = "Enter key and value (required). Group is optional. Maximum 24 characters each."
         alert.alertStyle = .informational
         alert.addButton(withTitle: "Save")
         alert.addButton(withTitle: "Cancel")
 
         let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 280, height: 160))
 
-        let groupLabel = NSTextField(labelWithString: "Group:")
+        let groupLabel = NSTextField(labelWithString: "Group (Optional):")
         groupLabel.frame = NSRect(x: 0, y: 136, width: 280, height: 18)
-        let groupField = NSTextField(frame: NSRect(x: 0, y: 110, width: 280, height: 24))
-        groupField.placeholderString = "e.g. App A"
+        let groupField = ShortcutTextField(frame: NSRect(x: 0, y: 110, width: 280, height: 24))
+        groupField.placeholderString = "Optional (e.g. App A)"
         groupField.delegate = self
         if let prefilledGroupName = prefilledGroupName {
             groupField.stringValue = prefilledGroupName
@@ -31,13 +31,13 @@ final class AddPortDialog: NSObject, NSTextFieldDelegate {
 
         let keyLabel = NSTextField(labelWithString: "Key:")
         keyLabel.frame = NSRect(x: 0, y: 84, width: 280, height: 18)
-        let keyField = NSTextField(frame: NSRect(x: 0, y: 58, width: 280, height: 24))
+        let keyField = ShortcutTextField(frame: NSRect(x: 0, y: 58, width: 280, height: 24))
         keyField.placeholderString = "e.g. web"
         keyField.delegate = self
 
         let valueLabel = NSTextField(labelWithString: "Value (Port):")
         valueLabel.frame = NSRect(x: 0, y: 32, width: 280, height: 18)
-        let valueField = NSTextField(frame: NSRect(x: 0, y: 6, width: 280, height: 24))
+        let valueField = ShortcutTextField(frame: NSRect(x: 0, y: 6, width: 280, height: 24))
         valueField.placeholderString = "e.g. 9400"
         valueField.delegate = self
 
@@ -49,7 +49,7 @@ final class AddPortDialog: NSObject, NSTextFieldDelegate {
         containerView.addSubview(valueField)
 
         alert.accessoryView = containerView
-        alert.window.initialFirstResponder = groupField.stringValue.isEmpty ? groupField : keyField
+        alert.window.initialFirstResponder = keyField
 
         NSApp.activate(ignoringOtherApps: true)
         let response = alert.runModal()
@@ -58,10 +58,11 @@ final class AddPortDialog: NSObject, NSTextFieldDelegate {
         }
 
         let rawGroup = groupField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let groupName = rawGroup.isEmpty ? nil : rawGroup
         let rawKey = keyField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         let rawValue = valueField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        return AddPortInput(groupName: rawGroup, key: rawKey, value: rawValue)
+        return AddPortInput(groupName: groupName, key: rawKey, value: rawValue)
     }
 
     func controlTextDidChange(_ notification: Notification) {

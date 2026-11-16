@@ -1,31 +1,43 @@
 import AppKit
 import PortssCore
 
+enum DeleteActionKind: Sendable {
+    case standaloneItem(itemId: UUID)
+    case groupItem(groupId: UUID, itemId: UUID)
+    case group(groupId: UUID)
+}
+
 struct DeletableTarget: Sendable {
-    let groupId: UUID
-    let itemId: UUID?
+    let action: DeleteActionKind
     let displayTitle: String
 }
 
 @MainActor
 final class DeletePortDialog {
-    func prompt(groups: [PortGroup]) -> DeletableTarget? {
+    func prompt(store: PortStore) -> DeletableTarget? {
         var targets: [DeletableTarget] = []
 
-        for group in groups {
+        for item in store.standaloneItems {
+            targets.append(
+                DeletableTarget(
+                    action: .standaloneItem(itemId: item.id),
+                    displayTitle: "\(item.key): \(item.value)"
+                )
+            )
+        }
+
+        for group in store.groups {
             for item in group.items {
                 targets.append(
                     DeletableTarget(
-                        groupId: group.id,
-                        itemId: item.id,
+                        action: .groupItem(groupId: group.id, itemId: item.id),
                         displayTitle: "[\(group.name)] \(item.key): \(item.value)"
                     )
                 )
             }
             targets.append(
                 DeletableTarget(
-                    groupId: group.id,
-                    itemId: nil,
+                    action: .group(groupId: group.id),
                     displayTitle: "Whole Group: \(group.name)"
                 )
             )

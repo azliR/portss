@@ -11,54 +11,95 @@ struct PortStorageTests {
         return (storage, temporaryDirectory)
     }
 
-    @Test func testEmptyStorageReturnsEmptyList() throws {
+    @Test func testEmptyStorageReturnsEmptyStore() throws {
         let (storage, tempDir) = try createTemporaryStorage()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        let groups = try storage.loadGroups()
-        #expect(groups.isEmpty)
+        let store = try storage.loadStore()
+        #expect(store.isEmpty)
+        #expect(store.standaloneItems.isEmpty)
+        #expect(store.groups.isEmpty)
     }
 
-    @Test func testAddAndRetrieveItem() throws {
+    @Test func testAddStandaloneItemWithNilGroup() throws {
+        let (storage, tempDir) = try createTemporaryStorage()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        try storage.addOrUpdateItem(groupName: nil, key: "web", value: "3000")
+
+        let store = try storage.loadStore()
+        #expect(store.standaloneItems.count == 1)
+        #expect(store.standaloneItems.first?.key == "web")
+        #expect(store.standaloneItems.first?.value == "3000")
+        #expect(store.groups.isEmpty)
+    }
+
+    @Test func testAddStandaloneItemWithEmptyGroup() throws {
+        let (storage, tempDir) = try createTemporaryStorage()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        try storage.addOrUpdateItem(groupName: "   ", key: "api", value: "8000")
+
+        let store = try storage.loadStore()
+        #expect(store.standaloneItems.count == 1)
+        #expect(store.standaloneItems.first?.key == "api")
+        #expect(store.groups.isEmpty)
+    }
+
+    @Test func testAddGroupedItem() throws {
         let (storage, tempDir) = try createTemporaryStorage()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
         try storage.addOrUpdateItem(groupName: "App A", key: "web", value: "9400")
 
-        let groups = try storage.loadGroups()
-        #expect(groups.count == 1)
-        #expect(groups.first?.name == "App A")
-        #expect(groups.first?.items.count == 1)
-        #expect(groups.first?.items.first?.key == "web")
-        #expect(groups.first?.items.first?.value == "9400")
+        let store = try storage.loadStore()
+        #expect(store.standaloneItems.isEmpty)
+        #expect(store.groups.count == 1)
+        #expect(store.groups.first?.name == "App A")
+        #expect(store.groups.first?.items.count == 1)
+        #expect(store.groups.first?.items.first?.key == "web")
+        #expect(store.groups.first?.items.first?.value == "9400")
     }
 
-    @Test func testUpdateExistingItemValue() throws {
+    @Test func testUpdateExistingStandaloneItem() throws {
+        let (storage, tempDir) = try createTemporaryStorage()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        try storage.addOrUpdateItem(groupName: nil, key: "web", value: "3000")
+        try storage.addOrUpdateItem(groupName: nil, key: "web", value: "3001")
+
+        let store = try storage.loadStore()
+        #expect(store.standaloneItems.count == 1)
+        #expect(store.standaloneItems.first?.value == "3001")
+    }
+
+    @Test func testDeleteStandaloneItem() throws {
+        let (storage, tempDir) = try createTemporaryStorage()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        try storage.addOrUpdateItem(groupName: nil, key: "web", value: "3000")
+        let store = try storage.loadStore()
+        let itemId = try #require(store.standaloneItems.first?.id)
+
+        try storage.deleteStandaloneItem(itemId: itemId)
+
+        let updatedStore = try storage.loadStore()
+        #expect(updatedStore.standaloneItems.isEmpty)
+    }
+
+    @Test func testDeleteGroupItemRemovesGroupWhenEmpty() throws {
         let (storage, tempDir) = try createTemporaryStorage()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
         try storage.addOrUpdateItem(groupName: "App A", key: "web", value: "9400")
-        try storage.addOrUpdateItem(groupName: "App A", key: "web", value: "9401")
+        let store = try storage.loadStore()
+        let groupId = try #require(store.groups.first?.id)
+        let itemId = try #require(store.groups.first?.items.first?.id)
 
-        let groups = try storage.loadGroups()
-        #expect(groups.count == 1)
-        #expect(groups.first?.items.count == 1)
-        #expect(groups.first?.items.first?.value == "9401")
-    }
+        try storage.deleteGroupItem(groupId: groupId, itemId: itemId)
 
-    @Test func testDeleteItemRemovesGroupWhenEmpty() throws {
-        let (storage, tempDir) = try createTemporaryStorage()
-        defer { try? FileManager.default.removeItem(at: tempDir) }
-
-        try storage.addOrUpdateItem(groupName: "App A", key: "web", value: "9400")
-        let groups = try storage.loadGroups()
-        let groupId = try #require(groups.first?.id)
-        let itemId = try #require(groups.first?.items.first?.id)
-
-        try storage.deleteItem(groupId: groupId, itemId: itemId)
-
-        let updatedGroups = try storage.loadGroups()
-        #expect(updatedGroups.isEmpty)
+        let updatedStore = try storage.loadStore()
+        #expect(updatedStore.groups.isEmpty)
     }
 
     @Test func testDeleteGroupRemovesEntireGroup() throws {
@@ -68,13 +109,13 @@ struct PortStorageTests {
         try storage.addOrUpdateItem(groupName: "App A", key: "web", value: "9400")
         try storage.addOrUpdateItem(groupName: "App B", key: "api", value: "8080")
 
-        let groups = try storage.loadGroups()
-        let groupToDelete = try #require(groups.first(where: { $0.name == "App A" }))
+        let store = try storage.loadStore()
+        let groupToDelete = try #require(store.groups.first(where: { $0.name == "App A" }))
 
         try storage.deleteGroup(groupId: groupToDelete.id)
 
-        let remainingGroups = try storage.loadGroups()
-        #expect(remainingGroups.count == 1)
-        #expect(remainingGroups.first?.name == "App B")
+        let remainingStore = try storage.loadStore()
+        #expect(remainingStore.groups.count == 1)
+        #expect(remainingStore.groups.first?.name == "App B")
     }
 }
