@@ -6,15 +6,15 @@
 ## Architecture
 The project follows a modular architecture using Swift Package Manager:
 - `PortssCore` (Library target):
-  - `Models/`: Core domain entities (`PortItem`, `PortGroup`, `PortStore`, `ValidationError`). Enforces 24-character maximum constraints. Supports optional groups for standalone items.
+  - `Models/`: Core domain entities (`PortItem`, `PortGroup`, `PortStore`, `PortSortOption`, `ValidationError`). Enforces 24-character maximum constraints. Tracks timestamps (`createdAt`, `updatedAt`). Supports optional groups for standalone items.
   - `Storage/`: Local persistence (`PortStorage`, `StorageError`) managing `~/Library/Application Support/portss/ports.json`.
-  - `Utilities/`: Helper services (`ClipboardManager`).
+  - `Utilities/`: Helper services (`ClipboardManager`, `PortSorter`).
 - `portss` (Executable target):
   - `App/`: Application lifecycle (`AppDelegate`, `StatusBarController`). Configures standard Edit menu for text shortcuts.
   - `UI/`: Native macOS dialogs & custom item views (`AddPortDialog`, `EditPortDialog`, `DeletePortDialog`, `DialogPresenter`, `ShortcutTextField`, `PortMenuItemView`).
   - `main.swift`: Entry point.
 - `portssTests` (Test target):
-  - Unit tests covering model validation, storage operations, and error handling.
+  - Unit tests covering model validation, storage operations, sorting logic, and error handling.
 
 ## Build & Test Commands
 - Run tests: `swift test`
@@ -27,6 +27,7 @@ The project follows a modular architecture using Swift Package Manager:
 - `LSUIElement = true` ensures the app lives solely in the macOS status bar without a Dock icon.
 - Optional groups: Standalone ports appear directly in the root menu; grouped ports are folded as submenus.
 - Visual formatting: Native `PortMenuItemView` using AutoLayout flush-right trailing anchor (`trailingAnchor - 14`) and `allowsVibrancy = true` with `NSFont.menuFont(ofSize: 0)` ensuring native system menu typography and zero trailing whitespace.
+- Sorting: Dynamic sorting by `Created`, `Updated`, `Key (A-Z)`, or `Value (Port)` persisted via `UserDefaults`.
 - Keyboard support: Native text shortcuts (`Cmd+A`, `Cmd+Z`, `Cmd+C`, `Cmd+V`, `Cmd+X`) supported in all dialog text fields.
 - Full CRUD operations: Add, Edit, Delete for all ports and groups.
 - No silent fallbacks: all failures raise loud errors via native modal dialogs.

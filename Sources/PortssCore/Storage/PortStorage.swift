@@ -82,26 +82,44 @@ public final class PortStorage {
 
     public func addOrUpdateItem(groupName: String?, key: String, value: String) throws {
         var store = try loadStore()
-        let newItem = try PortItem(key: key, value: value)
         let trimmedGroupName = groupName?.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if let validGroupName = trimmedGroupName, !validGroupName.isEmpty {
             if let groupIndex = store.groups.firstIndex(where: { $0.name.caseInsensitiveCompare(validGroupName) == .orderedSame }) {
                 var group = store.groups[groupIndex]
                 if let existingItemIndex = group.items.firstIndex(where: { $0.key.caseInsensitiveCompare(key) == .orderedSame }) {
-                    group.items[existingItemIndex] = newItem
+                    let existingItem = group.items[existingItemIndex]
+                    let updatedItem = try PortItem(
+                        id: existingItem.id,
+                        key: key,
+                        value: value,
+                        createdAt: existingItem.createdAt,
+                        updatedAt: Date()
+                    )
+                    group.items[existingItemIndex] = updatedItem
                 } else {
+                    let newItem = try PortItem(key: key, value: value)
                     group.items.append(newItem)
                 }
                 store.groups[groupIndex] = group
             } else {
+                let newItem = try PortItem(key: key, value: value)
                 let newGroup = try PortGroup(name: validGroupName, items: [newItem])
                 store.groups.append(newGroup)
             }
         } else {
             if let existingIndex = store.standaloneItems.firstIndex(where: { $0.key.caseInsensitiveCompare(key) == .orderedSame }) {
-                store.standaloneItems[existingIndex] = newItem
+                let existingItem = store.standaloneItems[existingIndex]
+                let updatedItem = try PortItem(
+                    id: existingItem.id,
+                    key: key,
+                    value: value,
+                    createdAt: existingItem.createdAt,
+                    updatedAt: Date()
+                )
+                store.standaloneItems[existingIndex] = updatedItem
             } else {
+                let newItem = try PortItem(key: key, value: value)
                 store.standaloneItems.append(newItem)
             }
         }
@@ -111,14 +129,14 @@ public final class PortStorage {
 
     public func updateItem(sourceLocation: PortItemSourceLocation, newGroupName: String?, newKey: String, newValue: String) throws {
         var store = try loadStore()
-        let updatedItem = try PortItem(key: newKey, value: newValue)
+        let originalItem: PortItem
 
         switch sourceLocation {
         case .standalone(let itemId):
             guard let itemIndex = store.standaloneItems.firstIndex(where: { $0.id == itemId }) else {
                 throw ValidationError.itemNotFound(key: itemId.uuidString)
             }
-            store.standaloneItems.remove(at: itemIndex)
+            originalItem = store.standaloneItems.remove(at: itemIndex)
 
         case .group(let groupId, let itemId):
             guard let groupIndex = store.groups.firstIndex(where: { $0.id == groupId }) else {
@@ -128,13 +146,21 @@ public final class PortStorage {
             guard let itemIndex = group.items.firstIndex(where: { $0.id == itemId }) else {
                 throw ValidationError.itemNotFound(key: itemId.uuidString)
             }
-            group.items.remove(at: itemIndex)
+            originalItem = group.items.remove(at: itemIndex)
             if group.items.isEmpty {
                 store.groups.remove(at: groupIndex)
             } else {
                 store.groups[groupIndex] = group
             }
         }
+
+        let updatedItem = try PortItem(
+            id: originalItem.id,
+            key: newKey,
+            value: newValue,
+            createdAt: originalItem.createdAt,
+            updatedAt: Date()
+        )
 
         let trimmedGroupName = newGroupName?.trimmingCharacters(in: .whitespacesAndNewlines)
         if let validGroupName = trimmedGroupName, !validGroupName.isEmpty {

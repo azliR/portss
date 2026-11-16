@@ -8,6 +8,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let addPortDialog: AddPortDialog
     private let editPortDialog: EditPortDialog
     private let deletePortDialog: DeletePortDialog
+    private let sortOptionUserDefaultsKey = "portss_sort_option"
 
     init(storage: PortStorage) {
         self.storage = storage
@@ -19,6 +20,19 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         setupStatusItem()
         rebuildMenu()
+    }
+
+    private var currentSortOption: PortSortOption {
+        get {
+            guard let rawValue = UserDefaults.standard.string(forKey: sortOptionUserDefaultsKey),
+                  let option = PortSortOption(rawValue: rawValue) else {
+                return .created
+            }
+            return option
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: sortOptionUserDefaultsKey)
+        }
     }
 
     private func setupStatusItem() {
@@ -71,6 +85,20 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
+        let sortMenuItem = NSMenuItem(title: "Sort by", action: nil, keyEquivalent: "")
+        let sortSubmenu = NSMenu(title: "Sort by")
+        for option in PortSortOption.allCases {
+            let item = NSMenuItem(title: option.displayName, action: #selector(handleSelectSortOption(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = option
+            item.state = (option == currentSortOption) ? .on : .off
+            sortSubmenu.addItem(item)
+        }
+        sortMenuItem.submenu = sortSubmenu
+        menu.addItem(sortMenuItem)
+
+        menu.addItem(NSMenuItem.separator())
+
         let openConfigFileItem = NSMenuItem(title: "Open ports.json", action: #selector(handleOpenConfigFile), keyEquivalent: "")
         openConfigFileItem.target = self
         menu.addItem(openConfigFileItem)
@@ -83,7 +111,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private func populateStore(_ store: PortStore, into menu: NSMenu) {
-        for item in store.standaloneItems {
+        let sortedStandaloneItems = PortSorter.sort(items: store.standaloneItems, by: currentSortOption)
+        for item in sortedStandaloneItems {
             let itemMenu = createPortMenuItem(item: item)
             menu.addItem(itemMenu)
         }
@@ -92,7 +121,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             menu.addItem(NSMenuItem.separator())
         }
 
-        for group in store.groups {
+        let sortedGroups = store.groups.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        for group in sortedGroups {
             let groupMenuItem = NSMenuItem(title: group.name, action: nil, keyEquivalent: "")
             let groupSubmenu = NSMenu(title: group.name)
 
@@ -101,7 +131,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                 emptyItem.isEnabled = false
                 groupSubmenu.addItem(emptyItem)
             } else {
-                for item in group.items {
+                let sortedGroupItems = PortSorter.sort(items: group.items, by: currentSortOption)
+                for item in sortedGroupItems {
                     let itemMenu = createPortMenuItem(item: item)
                     groupSubmenu.addItem(itemMenu)
                 }
@@ -126,6 +157,15 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private func executeCopy(portValue: String) {
         ClipboardManager.shared.copyToClipboard(text: portValue)
         NSSound.beep()
+    }
+
+    @objc private func handleSelectSortOption(_ sender: NSMenuItem) {
+        guard let option = sender.representedObject as? PortSortOption else {
+            return
+        }
+
+        currentSortOption = option
+        rebuildMenu()
     }
 
     @objc private func handleAddPort() {

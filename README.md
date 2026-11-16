@@ -4,6 +4,7 @@ A minimal, ultra-lightweight macOS menu bar note-taking application designed to 
 
 - **Menu Bar Only**: Lives solely in your macOS status bar (`LSUIElement`), no Dock icon.
 - **Ultra Lightweight**: Pure AppKit with binary size under 230 KB and minimal memory footprint (~4-7 MB RAM).
+- **Flexible Sorting**: Sort ports on-the-fly by **Created**, **Updated**, **Key (A-Z)**, or **Value (Port)**.
 - **Native Typography & Vibrancy**: Renders with native system `menuFont` and vibrancy support, seamlessly matching macOS menu items.
 - **Flush-Right Table Layout**: Keys align strictly to the left, and values/ports align flush to the far right margin with zero trailing empty space.
 - **Native Hover Highlights**: Interactive row hover feedback adhering to macOS system colors and dark/light modes.
@@ -52,8 +53,13 @@ open dist/portss.app
    - **Value**: (e.g., `9400`)
 3. Click any port in the menu list to copy its port number to the clipboard.
 4. Select **Edit Port...** to modify the group, key, or port value of any existing item.
-5. Select **Delete Port...** to remove a specific port or entire group.
-6. Select **Open ports.json** to view or edit the underlying JSON file directly.
+5. Select **Sort by** to change sort order:
+   - **Created** (most recently created first)
+   - **Updated** (most recently updated first)
+   - **Key (A-Z)**
+   - **Value (Port)** (numerical/alphabetical ascending)
+6. Select **Delete Port...** to remove a specific port or entire group.
+7. Select **Open ports.json** to view or edit the underlying JSON file directly.
 
 ---
 
