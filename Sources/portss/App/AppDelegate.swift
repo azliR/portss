@@ -15,6 +15,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             DialogPresenter.shared.showError(title: "Initialization Error", message: error.localizedDescription)
             NSApp.terminate(nil)
+            return
+        }
+
+        enableAutostartIfDisabled()
+    }
+
+    private func enableAutostartIfDisabled() {
+        guard !LaunchAtLoginManager.isEnabled() else {
+            return
+        }
+
+        do {
+            try LaunchAtLoginManager.register()
+        } catch {
+            DialogPresenter.shared.showError(
+                title: "Launch at Login Setup",
+                message: "Unable to register launch at login: \(error.localizedDescription)"
+            )
         }
     }
 

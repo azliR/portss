@@ -8,6 +8,7 @@ APP_BUNDLE="${OUTPUT_DIR}/${APP_NAME}.app"
 CONTENTS_DIR="${APP_BUNDLE}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"
+SYSTEM_APPLICATIONS_DIR="/Applications"
 
 cd "${PROJECT_ROOT}"
 
@@ -54,3 +55,10 @@ echo "Signing ad-hoc..."
 codesign --force --deep --sign - "${APP_BUNDLE}"
 
 echo "Application bundle created at: ${APP_BUNDLE}"
+
+if [ -w "${SYSTEM_APPLICATIONS_DIR}" ]; then
+    echo "Installing to ${SYSTEM_APPLICATIONS_DIR}/${APP_NAME}.app..."
+    rm -rf "${SYSTEM_APPLICATIONS_DIR}/${APP_NAME}.app"
+    cp -R "${APP_BUNDLE}" "${SYSTEM_APPLICATIONS_DIR}/${APP_NAME}.app"
+    codesign --force --deep --sign - "${SYSTEM_APPLICATIONS_DIR}/${APP_NAME}.app"
+fi

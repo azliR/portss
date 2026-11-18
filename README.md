@@ -4,6 +4,7 @@ A minimal, ultra-lightweight macOS menu bar note-taking application designed to 
 
 - **Menu Bar Only**: Lives solely in your macOS status bar (`LSUIElement`), no Dock icon.
 - **Ultra Lightweight**: Pure AppKit with binary size under 230 KB and minimal memory footprint (~4-7 MB RAM).
+- **Autostart on Restart/Login**: Seamless automatic launch on user login via native macOS `LaunchAgents`, with an in-app toggle (`Launch at Login [✓]`).
 - **Flexible Sorting**: Sort ports on-the-fly by **Created**, **Updated**, **Key (A-Z)**, or **Value (Port)**.
 - **Native Typography & Vibrancy**: Renders with native system `menuFont` and vibrancy support, seamlessly matching macOS menu items.
 - **Flush-Right Table Layout**: Keys align strictly to the left, and values/ports align flush to the far right margin with zero trailing empty space.
@@ -29,17 +30,17 @@ A minimal, ultra-lightweight macOS menu bar note-taking application designed to 
 - macOS 13.0+
 - Swift 6+ (bundled with Xcode or Command Line Tools)
 
-### Build `.app` Bundle
-To build the release application bundle:
+### Build & Install `.app` Bundle
+To build the release application bundle and install it to `/Applications`:
 ```bash
 ./scripts/build-app.sh
 ```
-The output application bundle will be created at `dist/portss.app`.
+The application bundle is created at `dist/portss.app` and automatically installed to `/Applications/portss.app`.
 
 ### Running the App
-You can move `dist/portss.app` into `/Applications` or run it directly:
+You can open `/Applications/portss.app` directly:
 ```bash
-open dist/portss.app
+open /Applications/portss.app
 ```
 
 ---
@@ -58,8 +59,9 @@ open dist/portss.app
    - **Updated** (most recently updated first)
    - **Key (A-Z)**
    - **Value (Port)** (numerical/alphabetical ascending)
-6. Select **Delete Port...** to remove a specific port or entire group.
-7. Select **Open ports.json** to view or edit the underlying JSON file directly.
+6. Toggle **Launch at Login** to enable or disable automatic startup upon machine restart/login.
+7. Select **Delete Port...** to remove a specific port or entire group.
+8. Select **Open ports.json** to view or edit the underlying JSON file directly.
 
 ---
 

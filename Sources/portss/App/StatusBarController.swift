@@ -97,6 +97,15 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         sortMenuItem.submenu = sortSubmenu
         menu.addItem(sortMenuItem)
 
+        let launchAtLoginItem = NSMenuItem(
+            title: "Launch at Login",
+            action: #selector(handleToggleLaunchAtLogin),
+            keyEquivalent: ""
+        )
+        launchAtLoginItem.target = self
+        launchAtLoginItem.state = LaunchAtLoginManager.isEnabled() ? .on : .off
+        menu.addItem(launchAtLoginItem)
+
         menu.addItem(NSMenuItem.separator())
 
         let openConfigFileItem = NSMenuItem(title: "Open ports.json", action: #selector(handleOpenConfigFile), keyEquivalent: "")
@@ -166,6 +175,19 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         currentSortOption = option
         rebuildMenu()
+    }
+
+    @objc private func handleToggleLaunchAtLogin() {
+        let targetState = !LaunchAtLoginManager.isEnabled()
+        do {
+            try LaunchAtLoginManager.setLaunchAtLogin(enabled: targetState)
+            rebuildMenu()
+        } catch {
+            DialogPresenter.shared.showError(
+                title: "Launch at Login Error",
+                message: "Failed to configure launch at login: \(error.localizedDescription)"
+            )
+        }
     }
 
     @objc private func handleAddPort() {
