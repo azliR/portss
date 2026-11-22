@@ -11,7 +11,7 @@ The project follows a modular architecture using Swift Package Manager:
   - `Utilities/`: Helper services (`ClipboardManager`, `PortSorter`, `LaunchAtLoginManager`).
 - `portss` (Executable target):
   - `App/`: Application lifecycle (`AppDelegate`, `StatusBarController`). Configures standard Edit menu for text shortcuts.
-  - `UI/`: Native macOS dialogs & custom item views (`AddPortDialog`, `EditPortDialog`, `DeletePortDialog`, `DialogPresenter`, `ShortcutTextField`, `PortMenuItemView`, `GroupMenuItemView`).
+  - `UI/`: Error/confirmation alerts and custom menu item views (`DialogPresenter`, `PortMenuItemView`, `GroupMenuItemView`).
     - `UI/Manage/`: `ManagePortsWindowController` (split into `+Outline`, `+Editing`, `+DragDrop` extensions), `ManagePortsNode`, `ManagePortsOutlineView`. A single window with an `NSOutlineView` for inline editing of groups and ports, drafts for new rows, drag & drop between groups, and validation errors shown in the window status line.
   - `main.swift`: Entry point.
 - `portssTests` (Test target):
@@ -30,6 +30,6 @@ The project follows a modular architecture using Swift Package Manager:
 - Visual formatting: Native `PortMenuItemView` using AutoLayout flush-right trailing anchor (`trailingAnchor - 14`) and `allowsVibrancy = true` with `NSFont.menuFont(ofSize: 0)` ensuring native system menu typography and zero trailing whitespace.
 - Sorting: Dynamic sorting by `Created`, `Updated`, `Key (A-Z)`, or `Value (Port)` persisted via `UserDefaults`.
 - Autostart on boot: Native `LaunchAtLoginManager` manages `~/Library/LaunchAgents/com.local.portss.plist` pointing to `/Applications/portss.app`, toggleable via the status bar menu.
-- Keyboard support: Native text shortcuts (`Cmd+A`, `Cmd+Z`, `Cmd+C`, `Cmd+V`, `Cmd+X`) supported in all dialog text fields.
-- Full CRUD operations: Add, Edit, Delete for all ports and groups, via the `Manage Ports...` window (`Cmd+,` in the menu) or the legacy dialogs.
-- No silent fallbacks: all failures raise loud errors via native modal dialogs.
+- Keyboard support: Native text shortcuts (`Cmd+A`, `Cmd+Z`, `Cmd+C`, `Cmd+V`, `Cmd+X`) supported in Manage Ports text cells via the standard Edit menu; `Cmd+W` closes the window.
+- Full CRUD operations: Add, Edit, Delete for all ports and groups, exclusively via the `Manage Ports...` window (`Cmd+,` in the menu); the status bar menu is for quick copy and settings.
+- No silent fallbacks: validation errors are shown in red in the Manage Ports status line with a beep; storage/IO failures raise native modal alerts.

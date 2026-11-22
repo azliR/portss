@@ -5,18 +5,12 @@ import PortssCore
 final class StatusBarController: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem
     private let storage: PortStorage
-    private let addPortDialog: AddPortDialog
-    private let editPortDialog: EditPortDialog
-    private let deletePortDialog: DeletePortDialog
     private lazy var managePortsWindowController = ManagePortsWindowController(storage: storage)
     private let sortOptionUserDefaultsKey = "portss_sort_option"
 
     init(storage: PortStorage) {
         self.storage = storage
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        self.addPortDialog = AddPortDialog()
-        self.editPortDialog = EditPortDialog()
-        self.deletePortDialog = DeletePortDialog()
         super.init()
 
         setupStatusItem()
@@ -75,18 +69,6 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let manageItem = NSMenuItem(title: "Manage Ports...", action: #selector(handleManagePorts), keyEquivalent: ",")
         manageItem.target = self
         menu.addItem(manageItem)
-
-        let addItem = NSMenuItem(title: "Add Port...", action: #selector(handleAddPort), keyEquivalent: "")
-        addItem.target = self
-        menu.addItem(addItem)
-
-        let editItem = NSMenuItem(title: "Edit Port...", action: #selector(handleEditPort), keyEquivalent: "")
-        editItem.target = self
-        menu.addItem(editItem)
-
-        let deleteItem = NSMenuItem(title: "Delete Port...", action: #selector(handleDeletePort), keyEquivalent: "")
-        deleteItem.target = self
-        menu.addItem(deleteItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -208,83 +190,6 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func handleManagePorts() {
         managePortsWindowController.present()
-    }
-
-    @objc private func handleAddPort() {
-        guard let input = addPortDialog.prompt() else {
-            return
-        }
-
-        do {
-            try storage.addOrUpdateItem(groupName: input.groupName, key: input.key, value: input.value)
-            rebuildMenu()
-        } catch {
-            DialogPresenter.shared.showError(title: "Save Failed", message: error.localizedDescription)
-        }
-    }
-
-    @objc private func handleEditPort() {
-        let store: PortStore
-        do {
-            store = try storage.loadStore()
-        } catch {
-            DialogPresenter.shared.showError(title: "Data Loading Error", message: error.localizedDescription)
-            return
-        }
-
-        guard let output = editPortDialog.prompt(store: store) else {
-            return
-        }
-
-        do {
-            try storage.updateItem(
-                sourceLocation: output.sourceLocation,
-                newGroupName: output.newGroupName,
-                newKey: output.newKey,
-                newValue: output.newValue
-            )
-            rebuildMenu()
-        } catch {
-            DialogPresenter.shared.showError(title: "Update Failed", message: error.localizedDescription)
-        }
-    }
-
-    @objc private func handleDeletePort() {
-        let store: PortStore
-        do {
-            store = try storage.loadStore()
-        } catch {
-            DialogPresenter.shared.showError(title: "Data Loading Error", message: error.localizedDescription)
-            return
-        }
-
-        guard let target = deletePortDialog.prompt(store: store) else {
-            return
-        }
-
-        let isConfirmed = DialogPresenter.shared.showConfirmation(
-            title: "Confirm Deletion",
-            message: "Are you sure you want to delete '\(target.displayTitle)'?",
-            confirmButtonTitle: "Delete"
-        )
-
-        guard isConfirmed else {
-            return
-        }
-
-        do {
-            switch target.action {
-            case .standaloneItem(let itemId):
-                try storage.deleteStandaloneItem(itemId: itemId)
-            case .groupItem(let groupId, let itemId):
-                try storage.deleteGroupItem(groupId: groupId, itemId: itemId)
-            case .group(let groupId):
-                try storage.deleteGroup(groupId: groupId)
-            }
-            rebuildMenu()
-        } catch {
-            DialogPresenter.shared.showError(title: "Deletion Failed", message: error.localizedDescription)
-        }
     }
 
     @objc private func handleOpenConfigFile() {

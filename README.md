@@ -14,12 +14,9 @@ A minimal, ultra-lightweight macOS menu bar note-taking application designed to 
   - Grouped ports automatically collapse into native folded submenus.
 - **Full Management (Add, Edit, Delete)**:
   - **Manage Ports...**: One window to add, rename, edit, move (drag & drop), and remove ports and groups inline.
-  - **Add Port...**: Add standalone or grouped ports.
-  - **Edit Port...**: Select any port from dropdown, prefilled with current group, key, and value to easily modify.
-  - **Delete Port...**: Delete specific ports or entire groups.
 - **Max 24 Characters**: Key, value, and optional group name are constrained to 24 characters max.
 - **Quick Copy**: Click any port item to immediately copy the port number to your clipboard.
-- **Standard Keyboard Shortcuts**: Full support for `Cmd+A` (Select All), `Cmd+Z` (Undo), `Cmd+Shift+Z` (Redo), `Cmd+C` (Copy), `Cmd+V` (Paste), and `Cmd+X` (Cut) in all text fields.
+- **Standard Keyboard Shortcuts**: Full support for `Cmd+A` (Select All), `Cmd+Z` (Undo), `Cmd+Shift+Z` (Redo), `Cmd+C` (Copy), `Cmd+V` (Paste), and `Cmd+X` (Cut) in the Manage Ports window, plus `Cmd+W` to close it.
 - **Local Persistence**: Stored cleanly at `~/Library/Application Support/portss/ports.json`.
 - **Free & Independent**: Works with standard Ad-hoc code signing without a paid Apple Developer account.
 
@@ -49,25 +46,20 @@ open /Applications/portss.app
 ## Usage
 
 1. Click the **network** icon in your macOS status bar.
-2. Select **Add Port...** to enter:
-   - **Group (Optional)**: Leave blank for root menu item, or enter a name (e.g., `App A`) to fold into a submenu.
-   - **Key**: (e.g., `web`)
-   - **Value**: (e.g., `9400`)
-3. Click any port in the menu list to copy its port number to the clipboard.
-4. Select **Edit Port...** to modify the group, key, or port value of any existing item.
-5. Select **Sort by** to change sort order:
-   - **Created** (most recently created first)
-   - **Updated** (most recently updated first)
-   - **Key (A-Z)**
-   - **Value (Port)** (numerical/alphabetical ascending)
-6. Toggle **Launch at Login** to enable or disable automatic startup upon machine restart/login.
-7. Select **Delete Port...** to remove a specific port or entire group.
-8. Select **Manage Ports...** to manage everything in one window:
+2. Click any port in the menu list to copy its port number to the clipboard.
+3. Select **Manage Ports...** (`Cmd+,`) to manage everything in one window:
    - **Add Port** / **Add Group** insert a new row and start editing it inline (the port goes into the selected group).
    - Double-click a cell or press Return to rename a group or edit a key/port; Escape cancels.
    - Drag a port onto a group (or the empty area for standalone) to move it.
    - **Remove** or the Delete key removes the selected row; groups with ports ask for confirmation.
-9. Select **Open ports.json** to view or edit the underlying JSON file directly.
+   - Validation errors (empty fields, duplicate keys or group names) appear in red at the bottom of the window.
+4. Select **Sort by** to change the menu sort order:
+   - **Created** (most recently created first)
+   - **Updated** (most recently updated first)
+   - **Key (A-Z)**
+   - **Value (Port)** (numerical/alphabetical ascending)
+5. Toggle **Launch at Login** to enable or disable automatic startup upon machine restart/login.
+6. Select **Open ports.json** to view or edit the underlying JSON file directly.
 
 ---
 
