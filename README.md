@@ -13,6 +13,7 @@ A minimal, ultra-lightweight macOS menu bar note-taking application designed to 
   - Standalone ports (no group) appear directly in the root menu for instant 1-click copying.
   - Grouped ports automatically collapse into native folded submenus.
 - **Full Management (Add, Edit, Delete)**:
+  - **Manage Ports...**: One window to add, rename, edit, move (drag & drop), and remove ports and groups inline.
   - **Add Port...**: Add standalone or grouped ports.
   - **Edit Port...**: Select any port from dropdown, prefilled with current group, key, and value to easily modify.
   - **Delete Port...**: Delete specific ports or entire groups.
@@ -61,7 +62,12 @@ open /Applications/portss.app
    - **Value (Port)** (numerical/alphabetical ascending)
 6. Toggle **Launch at Login** to enable or disable automatic startup upon machine restart/login.
 7. Select **Delete Port...** to remove a specific port or entire group.
-8. Select **Open ports.json** to view or edit the underlying JSON file directly.
+8. Select **Manage Ports...** to manage everything in one window:
+   - **Add Port** / **Add Group** insert a new row and start editing it inline (the port goes into the selected group).
+   - Double-click a cell or press Return to rename a group or edit a key/port; Escape cancels.
+   - Drag a port onto a group (or the empty area for standalone) to move it.
+   - **Remove** or the Delete key removes the selected row; groups with ports ask for confirmation.
+9. Select **Open ports.json** to view or edit the underlying JSON file directly.
 
 ---
 

@@ -7,11 +7,12 @@
 The project follows a modular architecture using Swift Package Manager:
 - `PortssCore` (Library target):
   - `Models/`: Core domain entities (`PortItem`, `PortGroup`, `PortStore`, `PortSortOption`, `ValidationError`). Enforces 24-character maximum constraints. Tracks timestamps (`createdAt`, `updatedAt`). Supports optional groups for standalone items.
-  - `Storage/`: Local persistence (`PortStorage`, `StorageError`) managing `~/Library/Application Support/portss/ports.json`.
+  - `Storage/`: Local persistence (`PortStorage`, `StorageError`) managing `~/Library/Application Support/portss/ports.json`. `PortStorage+Management` adds id-based create/rename group, add/update/move/remove item APIs that reject duplicate keys/group names and keep empty groups.
   - `Utilities/`: Helper services (`ClipboardManager`, `PortSorter`, `LaunchAtLoginManager`).
 - `portss` (Executable target):
   - `App/`: Application lifecycle (`AppDelegate`, `StatusBarController`). Configures standard Edit menu for text shortcuts.
   - `UI/`: Native macOS dialogs & custom item views (`AddPortDialog`, `EditPortDialog`, `DeletePortDialog`, `DialogPresenter`, `ShortcutTextField`, `PortMenuItemView`, `GroupMenuItemView`).
+    - `UI/Manage/`: `ManagePortsWindowController` (split into `+Outline`, `+Editing`, `+DragDrop` extensions), `ManagePortsNode`, `ManagePortsOutlineView`. A single window with an `NSOutlineView` for inline editing of groups and ports, drafts for new rows, drag & drop between groups, and validation errors shown in the window status line.
   - `main.swift`: Entry point.
 - `portssTests` (Test target):
   - Unit tests covering model validation, storage operations, sorting logic, autostart launch agent management, and error handling.
@@ -30,5 +31,5 @@ The project follows a modular architecture using Swift Package Manager:
 - Sorting: Dynamic sorting by `Created`, `Updated`, `Key (A-Z)`, or `Value (Port)` persisted via `UserDefaults`.
 - Autostart on boot: Native `LaunchAtLoginManager` manages `~/Library/LaunchAgents/com.local.portss.plist` pointing to `/Applications/portss.app`, toggleable via the status bar menu.
 - Keyboard support: Native text shortcuts (`Cmd+A`, `Cmd+Z`, `Cmd+C`, `Cmd+V`, `Cmd+X`) supported in all dialog text fields.
-- Full CRUD operations: Add, Edit, Delete for all ports and groups.
+- Full CRUD operations: Add, Edit, Delete for all ports and groups, via the `Manage Ports...` window (`Cmd+,` in the menu) or the legacy dialogs.
 - No silent fallbacks: all failures raise loud errors via native modal dialogs.

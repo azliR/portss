@@ -8,6 +8,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let addPortDialog: AddPortDialog
     private let editPortDialog: EditPortDialog
     private let deletePortDialog: DeletePortDialog
+    private lazy var managePortsWindowController = ManagePortsWindowController(storage: storage)
     private let sortOptionUserDefaultsKey = "portss_sort_option"
 
     init(storage: PortStorage) {
@@ -70,6 +71,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
 
         menu.addItem(NSMenuItem.separator())
+
+        let manageItem = NSMenuItem(title: "Manage Ports...", action: #selector(handleManagePorts), keyEquivalent: ",")
+        manageItem.target = self
+        menu.addItem(manageItem)
 
         let addItem = NSMenuItem(title: "Add Port...", action: #selector(handleAddPort), keyEquivalent: "")
         addItem.target = self
@@ -199,6 +204,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                 message: "Failed to configure launch at login: \(error.localizedDescription)"
             )
         }
+    }
+
+    @objc private func handleManagePorts() {
+        managePortsWindowController.present()
     }
 
     @objc private func handleAddPort() {
