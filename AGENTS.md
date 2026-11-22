@@ -11,7 +11,7 @@ The project follows a modular architecture using Swift Package Manager:
   - `Utilities/`: Helper services (`ClipboardManager`, `PortSorter`, `LaunchAtLoginManager`).
 - `portss` (Executable target):
   - `App/`: Application lifecycle (`AppDelegate`, `StatusBarController`). Configures standard Edit menu for text shortcuts.
-  - `UI/`: Native macOS dialogs & custom item views (`AddPortDialog`, `EditPortDialog`, `DeletePortDialog`, `DialogPresenter`, `ShortcutTextField`, `PortMenuItemView`).
+  - `UI/`: Native macOS dialogs & custom item views (`AddPortDialog`, `EditPortDialog`, `DeletePortDialog`, `DialogPresenter`, `ShortcutTextField`, `PortMenuItemView`, `GroupMenuItemView`).
   - `main.swift`: Entry point.
 - `portssTests` (Test target):
   - Unit tests covering model validation, storage operations, sorting logic, autostart launch agent management, and error handling.
@@ -25,7 +25,7 @@ The project follows a modular architecture using Swift Package Manager:
 ## Key Design Principles
 - Pure AppKit (`NSStatusItem` + `NSMenu`) to maintain minimal memory footprint (~4-7 MB RAM) and small binary size (~220 KB).
 - `LSUIElement = true` ensures the app lives solely in the macOS status bar without a Dock icon.
-- Optional groups: Standalone ports appear directly in the root menu; grouped ports are folded as submenus.
+- Optional groups: Standalone ports appear directly in the root menu; grouped ports are folded as submenus. Group rows use `GroupMenuItemView` (same 14pt leading inset) so they stay aligned with standalone items regardless of the root menu state column.
 - Visual formatting: Native `PortMenuItemView` using AutoLayout flush-right trailing anchor (`trailingAnchor - 14`) and `allowsVibrancy = true` with `NSFont.menuFont(ofSize: 0)` ensuring native system menu typography and zero trailing whitespace.
 - Sorting: Dynamic sorting by `Created`, `Updated`, `Key (A-Z)`, or `Value (Port)` persisted via `UserDefaults`.
 - Autostart on boot: Native `LaunchAtLoginManager` manages `~/Library/LaunchAgents/com.local.portss.plist` pointing to `/Applications/portss.app`, toggleable via the status bar menu.

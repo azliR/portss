@@ -133,6 +133,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let sortedGroups = store.groups.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         for group in sortedGroups {
             let groupMenuItem = NSMenuItem(title: group.name, action: nil, keyEquivalent: "")
+            groupMenuItem.view = GroupMenuItemView(groupName: group.name)
             let groupSubmenu = NSMenu(title: group.name)
 
             if group.items.isEmpty {
