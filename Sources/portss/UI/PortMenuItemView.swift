@@ -6,10 +6,9 @@ final class PortMenuItemView: NSView {
     private let portItem: PortItem
     private let onCopy: () -> Void
 
-    private let highlightContainerView = NSView()
     private let keyLabel = NSTextField(labelWithString: "")
     private let valueLabel = NSTextField(labelWithString: "")
-    private var trackingAreaRef: NSTrackingArea?
+    private var isRenderedHighlighted = false
 
     override var allowsVibrancy: Bool {
         return true
@@ -23,6 +22,7 @@ final class PortMenuItemView: NSView {
         self.autoresizingMask = [.width]
         setupViewHierarchy()
         setupConstraints()
+        applyColors(isHighlighted: false)
     }
 
     required init?(coder: NSCoder) {
@@ -30,20 +30,11 @@ final class PortMenuItemView: NSView {
     }
 
     private func setupViewHierarchy() {
-        wantsLayer = true
-
-        highlightContainerView.translatesAutoresizingMaskIntoConstraints = false
-        highlightContainerView.wantsLayer = true
-        highlightContainerView.layer?.cornerRadius = 4.0
-        highlightContainerView.layer?.backgroundColor = NSColor.clear.cgColor
-        addSubview(highlightContainerView)
-
         let standardMenuFont = NSFont.menuFont(ofSize: 0)
 
         keyLabel.translatesAutoresizingMaskIntoConstraints = false
         keyLabel.stringValue = portItem.key
         keyLabel.font = standardMenuFont
-        keyLabel.textColor = NSColor.controlTextColor
         keyLabel.lineBreakMode = .byTruncatingTail
         keyLabel.drawsBackground = false
         keyLabel.isBezeled = false
@@ -54,7 +45,6 @@ final class PortMenuItemView: NSView {
         valueLabel.translatesAutoresizingMaskIntoConstraints = false
         valueLabel.stringValue = portItem.value
         valueLabel.font = NSFont.monospacedDigitSystemFont(ofSize: standardMenuFont.pointSize, weight: .regular)
-        valueLabel.textColor = NSColor.secondaryLabelColor
         valueLabel.alignment = .right
         valueLabel.drawsBackground = false
         valueLabel.isBezeled = false
@@ -65,11 +55,6 @@ final class PortMenuItemView: NSView {
 
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            highlightContainerView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
-            highlightContainerView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
-            highlightContainerView.topAnchor.constraint(equalTo: topAnchor, constant: 1),
-            highlightContainerView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -1),
-
             keyLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
             keyLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
 
@@ -79,27 +64,19 @@ final class PortMenuItemView: NSView {
         ])
     }
 
-    override func updateTrackingAreas() {
-        super.updateTrackingAreas()
-
-        if let existing = trackingAreaRef {
-            removeTrackingArea(existing)
+    override func draw(_ dirtyRect: NSRect) {
+        let isHighlighted = enclosingMenuItem?.isHighlighted ?? false
+        if isHighlighted != isRenderedHighlighted {
+            applyColors(isHighlighted: isHighlighted)
         }
 
-        let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeAlways, .inVisibleRect]
-        let newTrackingArea = NSTrackingArea(rect: bounds, options: options, owner: self, userInfo: nil)
-        addTrackingArea(newTrackingArea)
-        self.trackingAreaRef = newTrackingArea
-    }
+        guard isHighlighted else {
+            return
+        }
 
-    override func mouseEntered(with event: NSEvent) {
-        super.mouseEntered(with: event)
-        setHoverState(isHovered: true)
-    }
-
-    override func mouseExited(with event: NSEvent) {
-        super.mouseExited(with: event)
-        setHoverState(isHovered: false)
+        let highlightRect = bounds.insetBy(dx: 4, dy: 1)
+        NSColor.selectedContentBackgroundColor.setFill()
+        NSBezierPath(roundedRect: highlightRect, xRadius: 4, yRadius: 4).fill()
     }
 
     override func mouseUp(with event: NSEvent) {
@@ -112,15 +89,11 @@ final class PortMenuItemView: NSView {
         enclosingMenuItem?.menu?.cancelTracking()
     }
 
-    private func setHoverState(isHovered: Bool) {
-        if isHovered {
-            highlightContainerView.layer?.backgroundColor = NSColor.selectedContentBackgroundColor.cgColor
-            keyLabel.textColor = NSColor.selectedMenuItemTextColor
-            valueLabel.textColor = NSColor.selectedMenuItemTextColor.withAlphaComponent(0.85)
-        } else {
-            highlightContainerView.layer?.backgroundColor = NSColor.clear.cgColor
-            keyLabel.textColor = NSColor.controlTextColor
-            valueLabel.textColor = NSColor.secondaryLabelColor
-        }
+    private func applyColors(isHighlighted: Bool) {
+        isRenderedHighlighted = isHighlighted
+        keyLabel.textColor = isHighlighted ? NSColor.selectedMenuItemTextColor : NSColor.controlTextColor
+        valueLabel.textColor = isHighlighted
+            ? NSColor.selectedMenuItemTextColor.withAlphaComponent(0.85)
+            : NSColor.secondaryLabelColor
     }
 }

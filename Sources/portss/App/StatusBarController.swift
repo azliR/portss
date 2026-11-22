@@ -154,7 +154,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private func createPortMenuItem(item: PortItem) -> NSMenuItem {
-        let menuItem = NSMenuItem()
+        let menuItem = NSMenuItem(title: item.key, action: #selector(handleCopyPort(_:)), keyEquivalent: "")
+        menuItem.target = self
         let customView = PortMenuItemView(portItem: item) { [weak self] in
             self?.executeCopy(portValue: item.value)
         }
@@ -167,6 +168,15 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private func executeCopy(portValue: String) {
         ClipboardManager.shared.copyToClipboard(text: portValue)
         NSSound.beep()
+    }
+
+    @objc private func handleCopyPort(_ sender: NSMenuItem) {
+        guard let portValue = sender.representedObject as? String else {
+            DialogPresenter.shared.showError(title: "Copy Failed", message: "Menu item has no port value to copy.")
+            return
+        }
+
+        executeCopy(portValue: portValue)
     }
 
     @objc private func handleSelectSortOption(_ sender: NSMenuItem) {
