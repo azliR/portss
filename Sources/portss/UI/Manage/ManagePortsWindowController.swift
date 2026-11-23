@@ -25,6 +25,7 @@ final class ManagePortsWindowController: NSWindowController {
     var hasLoadedOnce = false
     var isReloading = false
     var isCancellingEdit = false
+    var isHandlingDraftNavigation = false
     var draggedNode: ManagePortsNode?
 
     init(storage: PortStorage) {

@@ -13,6 +13,7 @@ final class ManagePortsNode {
     let kind: Kind
     var children: [ManagePortsNode]
     var draftKey = ""
+    var draftValue = ""
 
     init(kind: Kind, children: [ManagePortsNode] = []) {
         self.kind = kind
@@ -75,7 +76,9 @@ final class ManagePortsNode {
             return group.items.count == 1 ? "1 port" : "\(group.items.count) ports"
         case .port(let item, _):
             return item.value
-        case .draftGroup, .draftPort:
+        case .draftPort:
+            return draftValue
+        case .draftGroup:
             return ""
         }
     }

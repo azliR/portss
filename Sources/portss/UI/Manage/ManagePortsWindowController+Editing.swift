@@ -13,7 +13,8 @@ extension ManagePortsWindowController: NSTextFieldDelegate {
     func beginEditing(row: Int, column: Int) {
         guard let cellView = outlineView.view(atColumn: column, row: row, makeIfNecessary: true) as? NSTableCellView,
               let textField = cellView.textField,
-              textField.isEditable else {
+              textField.isEditable,
+              textField.currentEditor() == nil else {
             return
         }
 
@@ -95,7 +96,7 @@ extension ManagePortsWindowController: NSTextFieldDelegate {
         )
     }
 
-    private func discardDrafts() {
+    func discardDrafts() {
         let hasDraft = rootNodes.contains { $0.isDraft || $0.children.contains(where: \.isDraft) }
         guard hasDraft else {
             return
@@ -119,17 +120,34 @@ extension ManagePortsWindowController: NSTextFieldDelegate {
     }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
-        guard commandSelector == #selector(NSResponder.cancelOperation(_:)) else {
+        let row = outlineView.row(for: control)
+        let column = outlineView.column(for: control)
+        guard row >= 0, column >= 0, let node = outlineView.item(atRow: row) as? ManagePortsNode else {
             return false
         }
 
-        isCancellingEdit = true
-        window?.makeFirstResponder(outlineView)
-        return true
+        let text = textView.string.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isNameColumn = outlineView.tableColumns[column].identifier == ColumnIdentifier.name
+
+        if node.isDraft {
+            return handleDraftCommand(commandSelector, node: node, row: row, isNameColumn: isNameColumn, text: text)
+        }
+
+        switch commandSelector {
+        case #selector(NSResponder.cancelOperation(_:)):
+            isCancellingEdit = true
+            window?.makeFirstResponder(outlineView)
+            return true
+        case #selector(NSResponder.insertTab(_:)), #selector(NSResponder.insertBacktab(_:)):
+            window?.makeFirstResponder(outlineView)
+            return true
+        default:
+            return false
+        }
     }
 
     func controlTextDidEndEditing(_ notification: Notification) {
-        guard let textField = notification.object as? NSTextField else {
+        guard !isHandlingDraftNavigation, let textField = notification.object as? NSTextField else {
             return
         }
 
@@ -145,6 +163,14 @@ extension ManagePortsWindowController: NSTextFieldDelegate {
         let text = textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         let isNameColumn = outlineView.tableColumns[column].identifier == ColumnIdentifier.name
 
+        if node.isDraft {
+            storeDraftText(text, in: node, isNameColumn: isNameColumn)
+            DispatchQueue.main.async { [weak self] in
+                self?.finishDraftAfterFocusLoss(node)
+            }
+            return
+        }
+
         DispatchQueue.main.async { [weak self] in
             self?.commitEdit(node: node, text: text, isNameColumn: isNameColumn, wasCancelled: wasCancelled)
         }
@@ -152,10 +178,8 @@ extension ManagePortsWindowController: NSTextFieldDelegate {
 
     private func commitEdit(node: ManagePortsNode, text: String, isNameColumn: Bool, wasCancelled: Bool) {
         switch node.kind {
-        case .draftGroup:
-            commitDraftGroup(name: text, wasCancelled: wasCancelled)
-        case .draftPort(let groupId):
-            commitDraftPort(node: node, groupId: groupId, text: text, isNameColumn: isNameColumn, wasCancelled: wasCancelled)
+        case .draftGroup, .draftPort:
+            return
         case .group(let group):
             guard !wasCancelled, text != group.name else {
                 reloadOutlinePreservingExpansion()
@@ -177,59 +201,6 @@ extension ManagePortsWindowController: NSTextFieldDelegate {
         }
     }
 
-    private func commitDraftGroup(name: String, wasCancelled: Bool) {
-        guard !wasCancelled, !name.isEmpty else {
-            discardDrafts()
-            return
-        }
-
-        do {
-            let groupId = try storage.createGroup(name: name)
-            expandedGroupIds.insert(groupId)
-            showHint()
-            reloadFromStorage(selecting: .group(groupId))
-        } catch {
-            report(error)
-            reopenDraft(column: 0)
-        }
-    }
-
-    private func commitDraftPort(node: ManagePortsNode, groupId: UUID?, text: String, isNameColumn: Bool, wasCancelled: Bool) {
-        guard !wasCancelled else {
-            discardDrafts()
-            return
-        }
-
-        if isNameColumn {
-            guard !text.isEmpty else {
-                discardDrafts()
-                return
-            }
-            node.draftKey = text
-            reopenDraft(column: 1)
-            return
-        }
-
-        do {
-            let itemId = try storage.addItem(groupId: groupId, key: node.draftKey, value: text)
-            showHint()
-            reloadFromStorage(selecting: .port(itemId))
-        } catch {
-            report(error)
-            reopenDraft(column: error.isKeyError ? 0 : 1)
-        }
-    }
-
-    private func reopenDraft(column: Int) {
-        let allNodes = rootNodes + rootNodes.flatMap(\.children)
-        guard let draftNode = allNodes.first(where: \.isDraft) else {
-            return
-        }
-
-        outlineView.reloadItem(draftNode)
-        beginEditing(row: outlineView.row(forItem: draftNode), column: column)
-    }
-
     private func perform(selecting target: SelectionTarget, operation: () throws -> Void) {
         do {
             try operation()
@@ -238,23 +209,6 @@ extension ManagePortsWindowController: NSTextFieldDelegate {
         } catch {
             report(error)
             reloadFromStorage(selecting: target)
-        }
-    }
-}
-
-private extension Error {
-    var isKeyError: Bool {
-        guard let validationError = self as? ValidationError else {
-            return false
-        }
-
-        switch validationError {
-        case .duplicateKey:
-            return true
-        case .emptyField(let field), .exceedsMaxLength(let field, _, _):
-            return field == "key"
-        case .itemNotFound, .groupNotFound, .duplicateGroupName:
-            return false
         }
     }
 }
