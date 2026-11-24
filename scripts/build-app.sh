@@ -20,6 +20,13 @@ mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}"
 
 cp "${PROJECT_ROOT}/.build/release/${APP_NAME}" "${MACOS_DIR}/${APP_NAME}"
 
+APP_ICON_SOURCE="${PROJECT_ROOT}/Assets/AppIcon.icns"
+if [ ! -f "${APP_ICON_SOURCE}" ]; then
+    echo "error: ${APP_ICON_SOURCE} is missing. Run ./scripts/generate-app-icon.sh first." >&2
+    exit 1
+fi
+cp "${APP_ICON_SOURCE}" "${RESOURCES_DIR}/AppIcon.icns"
+
 cat <<EOF > "${CONTENTS_DIR}/Info.plist"
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -29,6 +36,8 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <string>en</string>
     <key>CFBundleExecutable</key>
     <string>${APP_NAME}</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>com.local.${APP_NAME}</string>
     <key>CFBundleInfoDictionaryVersion</key>

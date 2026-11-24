@@ -36,12 +36,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             return
         }
 
-        if let symbolImage = NSImage(systemSymbolName: "network", accessibilityDescription: "portss") {
-            symbolImage.isTemplate = true
-            button.image = symbolImage
-        } else {
-            button.title = "portss"
-        }
+        button.image = PortGlyph.statusBarImage()
     }
 
     func rebuildMenu() {

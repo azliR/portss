@@ -11,7 +11,7 @@ The project follows a modular architecture using Swift Package Manager:
   - `Utilities/`: Helper services (`ClipboardManager`, `PortSorter`, `LaunchAtLoginManager`).
 - `portss` (Executable target):
   - `App/`: Application lifecycle (`AppDelegate`, `StatusBarController`). Configures standard Edit menu for text shortcuts.
-  - `UI/`: Error/confirmation alerts and custom menu item views (`DialogPresenter`, `PortMenuItemView`, `GroupMenuItemView`).
+  - `UI/`: Error/confirmation alerts and custom menu item views (`DialogPresenter`, `PortMenuItemView`, `GroupMenuItemView`). `PortGlyph` defines the RJ45 port glyph shared by the template status bar icon and the app icon renderer.
     - `UI/Manage/`: `ManagePortsWindowController` (split into `+Outline`, `+Editing`, `+DragDrop` extensions), `ManagePortsNode`, `ManagePortsOutlineView`. A single window with an `NSOutlineView` for inline editing of groups and ports, drafts for new rows, drag & drop between groups, and validation errors shown in the window status line.
   - `main.swift`: Entry point.
 - `portssTests` (Test target):
@@ -20,7 +20,8 @@ The project follows a modular architecture using Swift Package Manager:
 ## Build & Test Commands
 - Run tests: `swift test`
 - Build debug: `swift build`
-- Build release .app bundle & install: `./scripts/build-app.sh`
+- Regenerate app icon (`Assets/AppIcon.icns`, rendered from `PortGlyph` via `scripts/app-icon/main.swift`): `./scripts/generate-app-icon.sh`
+- Build release .app bundle & install: `./scripts/build-app.sh` (requires `Assets/AppIcon.icns`)
 - Output bundle: `dist/portss.app` and `/Applications/portss.app`
 
 ## Key Design Principles

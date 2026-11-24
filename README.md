@@ -35,6 +35,12 @@ To build the release application bundle and install it to `/Applications`:
 ```
 The application bundle is created at `dist/portss.app` and automatically installed to `/Applications/portss.app`.
 
+### App Icon
+The app icon (`Assets/AppIcon.icns`) and the menu bar icon share the same RJ45 port glyph (`PortGlyph.swift`). After changing the glyph, regenerate the icon:
+```bash
+./scripts/generate-app-icon.sh
+```
+
 ### Running the App
 You can open `/Applications/portss.app` directly:
 ```bash
@@ -45,7 +51,7 @@ open /Applications/portss.app
 
 ## Usage
 
-1. Click the **network** icon in your macOS status bar.
+1. Click the **port** icon in your macOS status bar.
 2. Click any port in the menu list to copy its port number to the clipboard.
 3. Select **Manage Ports...** (`Cmd+,`) to manage everything in one window:
    - **Add Port** / **Add Group** insert a new row and start editing it inline (the port goes into the selected group).
