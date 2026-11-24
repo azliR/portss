@@ -4,6 +4,7 @@ import PortssCore
 @MainActor
 final class StatusBarController: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem
+    private let rootMenu = NSMenu()
     private let storage: PortStorage
     private lazy var managePortsWindowController = ManagePortsWindowController(storage: storage)
     private let sortOptionUserDefaultsKey = "portss_sort_option"
@@ -14,6 +15,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         super.init()
 
         setupStatusItem()
+        rootMenu.delegate = self
+        statusItem.menu = rootMenu
         rebuildMenu()
     }
 
@@ -40,8 +43,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     func rebuildMenu() {
-        let menu = NSMenu()
-        menu.delegate = self
+        let menu = rootMenu
+        menu.removeAllItems()
 
         let store: PortStore
         do {
@@ -97,8 +100,6 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let quitItem = NSMenuItem(title: "Quit portss", action: #selector(handleQuit), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
-
-        statusItem.menu = menu
     }
 
     private func populateStore(_ store: PortStore, into menu: NSMenu) {
@@ -207,7 +208,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         NSApp.terminate(nil)
     }
 
-    func menuWillOpen(_ menu: NSMenu) {
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard menu === rootMenu else {
+            return
+        }
+
         rebuildMenu()
     }
 }
